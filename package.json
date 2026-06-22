@@ -1,0 +1,11 @@
+{
+  "name": "moustikprod-crm",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'Static site'"
+  },
+  "dependencies": {
+    "stripe": "^22.2.1"
+  }
+}
