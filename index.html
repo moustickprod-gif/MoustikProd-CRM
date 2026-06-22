@@ -1891,10 +1891,11 @@
                     :class="{
                       'bg-gray-100 text-gray-500': a.statut==='brouillon',
                       'bg-blue-50 text-blue-600': a.statut==='en_attente',
-                      'bg-emerald-50 text-emerald-700': a.statut==='signé',
+                      'bg-emerald-50 text-emerald-700': a.statut==='signé' && a.signatureData,
+                      'bg-orange-50 text-orange-600': a.statut==='signé' && !a.signatureData,
                       'bg-red-50 text-red-600': a.statut==='refusé'
                     }"
-                    x-text="a.statut==='signé'?'✅ Signé':a.statut==='en_attente'?'📨 En attente':a.statut==='refusé'?'❌ Refusé':'📝 Brouillon'">
+                    x-text="a.statut==='signé' && a.signatureData ? '✅ Signé' : a.statut==='signé' && !a.signatureData ? '⚠️ Sans signature' : a.statut==='en_attente'?'📨 En attente':a.statut==='refusé'?'❌ Refusé':'📝 Brouillon'">
                   </span>
                 </td>
                 <td class="px-5 py-3 flex gap-1.5 justify-end items-center">
@@ -6088,15 +6089,18 @@ ${htmlContent}
                   }
                 }
                 if (data.droitImageInclus) {
-                  const client = this.clients.find(c => c.id === obj.clientId) || {};
-                  this.autorisations.push({
-                    id: this.uid(), projetId: obj.projetId || '', prenom: client.prenom || '', nom: client.nom || '',
-                    dateNaissance: '', email: client.email || '', telephone: client.telephone || '',
-                    tuteurLegal: '', usages: ['Web','Réseaux sociaux'], territoire: 'France', duree: '1 an',
-                    remuneration: 'gratuite', statut: 'signé', lieuSignature: '', notes: 'Signé via le pack devis '+(obj.numero||''),
-                    signatureData: data.signatureData || '', signatureTuteurData: '',
-                    dateSignature: data.dateSignature || obj.dateSignature, dateCreation: new Date().toISOString(),
-                  });
+                  const packKey = 'pack_' + obj.id;
+                  if (!this.autorisations.some(a => a._packKey === packKey)) {
+                    const client = this.clients.find(c => c.id === obj.clientId) || {};
+                    this.autorisations.push({
+                      id: this.uid(), _packKey: packKey, projetId: obj.projetId || '', prenom: client.prenom || '', nom: client.nom || '',
+                      dateNaissance: '', email: client.email || '', telephone: client.telephone || '',
+                      tuteurLegal: '', usages: ['Web','Réseaux sociaux'], territoire: 'France', duree: '1 an',
+                      remuneration: 'gratuite', statut: 'signé', lieuSignature: '', notes: 'Signé via le pack devis '+(obj.numero||''),
+                      signatureData: data.signatureData || '', signatureTuteurData: '',
+                      dateSignature: data.dateSignature || obj.dateSignature, dateCreation: new Date().toISOString(),
+                    });
+                  }
                 }
               }
             }
@@ -6916,17 +6920,21 @@ ${htmlContent}
               }
             }
             if (data.droitImageInclus) {
-              const client = this.clients.find(c => c.id === d.clientId) || {};
-              this.autorisations.push({
-                id: this.uid(), projetId: d.projetId || '', prenom: client.prenom || '', nom: client.nom || '',
-                dateNaissance: '', email: client.email || '', telephone: client.telephone || '',
-                tuteurLegal: '', usages: ['Web','Réseaux sociaux'], territoire: 'France', duree: '1 an',
-                remuneration: 'gratuite', statut: 'signé', lieuSignature: '', notes: 'Signé via le pack devis '+(d.numero||''),
-                signatureData: data.signatureData || '', signatureTuteurData: '',
-                dateSignature: data.dateSignature || d.dateSignature, dateCreation: new Date().toISOString(),
-              });
-              await this.saveAutorisations();
-              messages.push('📸 Droit à l\'image signé');
+              const packKey = 'pack_' + d.id;
+              const alreadyExists = this.autorisations.some(a => a._packKey === packKey);
+              if (!alreadyExists) {
+                const client = this.clients.find(c => c.id === d.clientId) || {};
+                this.autorisations.push({
+                  id: this.uid(), _packKey: packKey, projetId: d.projetId || '', prenom: client.prenom || '', nom: client.nom || '',
+                  dateNaissance: '', email: client.email || '', telephone: client.telephone || '',
+                  tuteurLegal: '', usages: ['Web','Réseaux sociaux'], territoire: 'France', duree: '1 an',
+                  remuneration: 'gratuite', statut: 'signé', lieuSignature: '', notes: 'Signé via le pack devis '+(d.numero||''),
+                  signatureData: data.signatureData || '', signatureTuteurData: '',
+                  dateSignature: data.dateSignature || d.dateSignature, dateCreation: new Date().toISOString(),
+                });
+                await this.saveAutorisations();
+                messages.push('📸 Droit à l\'image signé');
+              }
             }
           }
           this.showToast(messages.join(' — '));
