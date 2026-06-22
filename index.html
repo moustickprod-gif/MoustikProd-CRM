@@ -5066,18 +5066,20 @@ function crm() {
     // ── DATA ──
     async loadFromFirestore(uid) {
       try {
-        const { doc, getDoc } = window._fbFns;
-        const [snapMain, snapCat, snapContrats, snapAutorisations, snapMusiques] = await Promise.all([
+        const { doc, getDoc, collection, getDocs, setDoc } = window._fbFns;
+        const [snapMain, snapCat, snapContrats, snapAutorisations, snapMusiques, clientsSnap, projetsSnap] = await Promise.all([
           getDoc(doc(window._fbDb, 'users', uid, 'data', 'main')),
           getDoc(doc(window._fbDb, 'users', uid, 'catalogue', 'items')),
           getDoc(doc(window._fbDb, 'users', uid, 'contrats', 'items')),
           getDoc(doc(window._fbDb, 'users', uid, 'autorisations', 'items')),
           getDoc(doc(window._fbDb, 'users', uid, 'musiques', 'items')),
+          getDocs(collection(window._fbDb, 'users', uid, 'clients')),
+          getDocs(collection(window._fbDb, 'users', uid, 'projets')),
         ]);
+        this.clients = clientsSnap.docs.map(d => d.data());
+        this.projets = projetsSnap.docs.map(d => d.data());
         if (snapMain.exists()) {
           const d = snapMain.data();
-          this.clients              = d.clients              || [];
-          this.projets              = d.projets              || [];
           this.devisListe           = d.devisListe           || [];
           this.factures             = d.factures             || [];
           this.transactions         = d.transactions         || [];
@@ -5092,6 +5094,16 @@ function crm() {
           }
           if (!this.settings.droitImageArticles || !this.settings.droitImageArticles.length) {
             this.settings.droitImageArticles = this._defaultDroitImage();
+          }
+          // Migration ponctuelle : d'anciens clients/projets stockés dans le blob unique
+          // sont recopiés vers leurs sous-collections dédiées (une seule fois).
+          if (!this.clients.length && Array.isArray(d.clients) && d.clients.length) {
+            for (const c of d.clients) { await setDoc(doc(window._fbDb, 'users', uid, 'clients', c.id), c); }
+            this.clients = d.clients;
+          }
+          if (!this.projets.length && Array.isArray(d.projets) && d.projets.length) {
+            for (const p of d.projets) { await setDoc(doc(window._fbDb, 'users', uid, 'projets', p.id), p); }
+            this.projets = d.projets;
           }
         }
         const CATALOGUE_VERSION = 2026;
@@ -5303,8 +5315,6 @@ function crm() {
       try {
         const { doc, setDoc } = window._fbFns;
         await setDoc(doc(window._fbDb, 'users', this.fbUser.uid, 'data', 'main'), {
-          clients: this.clients,
-          projets: this.projets,
           devisListe: this.devisListe,
           factures: this.factures,
           transactions: this.transactions,
@@ -5313,6 +5323,39 @@ function crm() {
           _updated: new Date().toISOString(),
         });
       } catch(e) { console.error('Firestore save error', e); }
+    },
+
+    // Clients et projets vivent dans leurs propres sous-collections Firestore
+    // (users/{uid}/clients/{id} et users/{uid}/projets/{id}) plutôt que dans le
+    // blob "data/main", afin que Studio et le CRM puissent lire/écrire une fiche
+    // précise sans jamais s'écraser l'un l'autre.
+    async saveClientDoc(client) {
+      if (!this.fbUser) return;
+      try {
+        const { doc, setDoc } = window._fbFns;
+        await setDoc(doc(window._fbDb, 'users', this.fbUser.uid, 'clients', client.id), client);
+      } catch(e) { console.error('Firestore saveClientDoc error', e); }
+    },
+    async deleteClientDoc(id) {
+      if (!this.fbUser) return;
+      try {
+        const { doc, deleteDoc } = window._fbFns;
+        await deleteDoc(doc(window._fbDb, 'users', this.fbUser.uid, 'clients', id));
+      } catch(e) { console.error('Firestore deleteClientDoc error', e); }
+    },
+    async saveProjetDoc(projet) {
+      if (!this.fbUser) return;
+      try {
+        const { doc, setDoc } = window._fbFns;
+        await setDoc(doc(window._fbDb, 'users', this.fbUser.uid, 'projets', projet.id), projet);
+      } catch(e) { console.error('Firestore saveProjetDoc error', e); }
+    },
+    async deleteProjetDoc(id) {
+      if (!this.fbUser) return;
+      try {
+        const { doc, deleteDoc } = window._fbFns;
+        await deleteDoc(doc(window._fbDb, 'users', this.fbUser.uid, 'projets', id));
+      } catch(e) { console.error('Firestore deleteProjetDoc error', e); }
     },
 
     saveUrssaf() { this.save(); },
@@ -5366,11 +5409,11 @@ function crm() {
           this.migrationProgress = { step: `Migration : ${key}`, current: ++current, total, done: false };
           await new Promise(r => setTimeout(r, 80)); // petit délai pour l'UX
         }
-        // Écrire en une seule fois
+        // Clients et projets vont dans leurs propres sous-collections ; le reste dans le blob "data/main"
         const { doc, setDoc } = window._fbFns;
+        for (const c of (d.clients||[])) { await setDoc(doc(window._fbDb, 'users', uid, 'clients', c.id), c); }
+        for (const p of (d.projets||[])) { await setDoc(doc(window._fbDb, 'users', uid, 'projets', p.id), p); }
         await setDoc(doc(window._fbDb, 'users', uid, 'data', 'main'), {
-          clients:            d.clients            || [],
-          projets:            d.projets            || [],
           devisListe:         d.devisListe         || [],
           factures:           d.factures           || [],
           transactions:       d.transactions       || [],
@@ -5399,8 +5442,8 @@ function crm() {
       r.onload = async ev => {
         try {
           const d = JSON.parse(ev.target.result);
-          if(d.clients)    this.clients    = d.clients;
-          if(d.projets)    this.projets    = d.projets;
+          if(d.clients)    { this.clients = d.clients; for (const c of d.clients) await this.saveClientDoc(c); }
+          if(d.projets)    { this.projets = d.projets; for (const p of d.projets) await this.saveProjetDoc(p); }
           if(d.devisListe) this.devisListe = d.devisListe;
           if(d.factures)   this.factures   = d.factures;
           if(d.settings)   this.settings   = { ...this.settings, ...d.settings };
@@ -7349,11 +7392,12 @@ ${htmlContent}
     editClient(c) { this.editingClient={...c, contacts: c.contacts ? JSON.parse(JSON.stringify(c.contacts)) : []}; this.clientModalTab='infos'; this.modals.client=true; },
     saveClient() {
       if(!this.editingClient.nom.trim()) return alert('Nom requis');
-      if(this.editingClient.id) { const i=this.clients.findIndex(c=>c.id===this.editingClient.id); this.clients[i]={...this.editingClient}; }
-      else this.clients.push({...this.editingClient,id:this.uid(),dateCreation:new Date().toISOString()});
-      this.save(); this.modals.client=false;
+      let saved;
+      if(this.editingClient.id) { const i=this.clients.findIndex(c=>c.id===this.editingClient.id); saved={...this.editingClient}; this.clients[i]=saved; }
+      else { saved={...this.editingClient,id:this.uid(),dateCreation:new Date().toISOString()}; this.clients.push(saved); }
+      this.saveClientDoc(saved); this.modals.client=false;
     },
-    deleteClient(id) { if(!confirm('Supprimer ce client ?')) return; this.clients=this.clients.filter(c=>c.id!==id); this.save(); this.modals.client=false; },
+    deleteClient(id) { if(!confirm('Supprimer ce client ?')) return; this.clients=this.clients.filter(c=>c.id!==id); this.deleteClientDoc(id); this.modals.client=false; },
     getClientNom(id) { return (this.clients.find(c=>c.id===id)||{}).nom||'—'; },
     getClient(id) { return this.clients.find(c=>c.id===id)||null; },
     caClient(id) { return this.factures.filter(f=>f.clientId===id&&f.statut==='payee').reduce((s,f)=>s+this.totalTTC(f),0); },
@@ -7383,9 +7427,10 @@ ${htmlContent}
     },
     saveProjet() {
       if(!this.editingProjet.titre.trim()) return alert('Titre requis');
-      if(this.editingProjet.id) { const i=this.projets.findIndex(p=>p.id===this.editingProjet.id); this.projets[i]={...this.editingProjet}; }
-      else this.projets.push({...this.editingProjet,id:this.uid(),dateCreation:new Date().toISOString()});
-      this.save(); this.modals.projet=false;
+      let saved;
+      if(this.editingProjet.id) { const i=this.projets.findIndex(p=>p.id===this.editingProjet.id); saved={...this.editingProjet}; this.projets[i]=saved; }
+      else { saved={...this.editingProjet,id:this.uid(),dateCreation:new Date().toISOString()}; this.projets.push(saved); }
+      this.saveProjetDoc(saved); this.modals.projet=false;
     },
     async validerEtape(etape) {
       etape.notified = true;
@@ -7417,7 +7462,7 @@ ${htmlContent}
       await this.envoyerEmailClient(client.email, sujet, html);
       this.showToast('✉️ Client notifié pour l\'étape : ' + nomEtape);
     },
-    deleteProjetModal() { if(!confirm('Supprimer ce projet ?')) return; this.projets=this.projets.filter(p=>p.id!==this.editingProjet.id); this.save(); this.modals.projet=false; },
+    deleteProjetModal() { if(!confirm('Supprimer ce projet ?')) return; const id=this.editingProjet.id; this.projets=this.projets.filter(p=>p.id!==id); this.deleteProjetDoc(id); this.modals.projet=false; },
     getProjetTitre(id) { return (this.projets.find(p=>p.id===id)||{}).titre||'—'; },
     addEtape() { this.editingProjet.etapes.push({id:this.uid(),label:'',done:false}); },
     removeEtape(i) { this.editingProjet.etapes.splice(i,1); },
@@ -8187,7 +8232,7 @@ ${tvaXML}
         this.claudeState.notionUrl = url;
         // Sauvegarder l'URL dans la fiche projet
         const i = this.projets.findIndex(p => p.id === this.editingProjet.id);
-        if (i >= 0) { this.projets[i].notionUrl = url; this.editingProjet.notionUrl = url; this.save(); }
+        if (i >= 0) { this.projets[i].notionUrl = url; this.editingProjet.notionUrl = url; this.saveProjetDoc(this.projets[i]); }
       } catch (e) {
         this.claudeState.notionError = e.message || 'Erreur lors de la création dans Notion.';
       } finally {
@@ -8381,7 +8426,7 @@ Réponds UNIQUEMENT avec le JSON, sans texte autour. Sois concis dans chaque cha
         const url = page.url || ('https://notion.so/' + (page.id||'').replace(/-/g,''));
         this.brainstorm.notionUrl = url;
         const i = this.projets.findIndex(p => p.id === this.editingProjet.id);
-        if (i >= 0) { this.projets[i].notionUrl = url; this.editingProjet.notionUrl = url; this.save(); }
+        if (i >= 0) { this.projets[i].notionUrl = url; this.editingProjet.notionUrl = url; this.saveProjetDoc(this.projets[i]); }
       } catch (e) {
         this.brainstorm.notionError = e.message || 'Erreur lors de la création dans Notion.';
       } finally {
@@ -8404,7 +8449,7 @@ Réponds UNIQUEMENT avec le JSON, sans texte autour. Sois concis dans chaque cha
         const existing = this.projets[i].generatedContent || '';
         this.projets[i].generatedContent = existing ? existing + '\n\n---\n\n' + entry : entry;
         this.editingProjet.generatedContent = this.projets[i].generatedContent;
-        this.save();
+        this.saveProjetDoc(this.projets[i]);
       }
       this.claudeState.saved = true;
       setTimeout(() => { this.claudeState.saved = false; }, 2500);
@@ -8733,6 +8778,9 @@ function escXml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&l
     doc,
     setDoc,
     getDoc,
+    collection,
+    getDocs,
+    deleteDoc,
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // ─── 🔧 REMPLACE CES VALEURS PAR TES CLÉS FIREBASE ───────────────────
@@ -8760,6 +8808,9 @@ function escXml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&l
     doc,
     setDoc,
     getDoc,
+    collection,
+    getDocs,
+    deleteDoc,
   };
 
   // Notifier Alpine dès que l'état auth est connu
