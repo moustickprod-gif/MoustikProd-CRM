@@ -2833,61 +2833,89 @@
       </div>
     </div>
     <!-- TAB INFOS -->
-    <div x-show="!editingClient.id || clientModalTab==='infos'" class="px-6 py-5 space-y-3 overflow-y-auto max-h-[65vh]">
-      <!-- Toggle B2B / B2C -->
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-semibold text-navy-200">Type de client</span>
-        <div class="flex rounded-xl overflow-hidden border border-[#DCE6E9] text-xs font-semibold">
+    <div x-show="!editingClient.id || clientModalTab==='infos'" class="px-6 py-5 space-y-5 overflow-y-auto max-h-[65vh]">
+
+      <!-- Header carte de contact : avatar + nom + type -->
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shrink-0"
+          :style="'background:'+avatarColor(editingClient.nom)" x-text="initials(editingClient.nom)"></div>
+        <div class="flex-1 min-w-0">
+          <input x-model="editingClient.nom" type="text" class="text-lg font-bold text-navy-500 dark:text-white bg-transparent border-0 focus:ring-0 w-full p-0" placeholder="Nom du client *">
+          <input x-model="editingClient.entreprise" type="text" class="text-sm text-navy-200 bg-transparent border-0 focus:ring-0 w-full p-0" placeholder="Entreprise (optionnel)">
+        </div>
+        <div class="flex rounded-xl overflow-hidden border border-[#DCE6E9] text-xs font-semibold shrink-0">
           <button @click="editingClient.typeClient='b2b'"
             class="px-3 py-1.5 transition-all"
             :class="editingClient.typeClient==='b2b'?'text-white':'text-navy-300 hover:text-navy-500'"
-            :style="editingClient.typeClient==='b2b'?'background:#024059':''">B2B — Professionnel</button>
+            :style="editingClient.typeClient==='b2b'?'background:#024059':''">B2B</button>
           <button @click="editingClient.typeClient='b2c'"
             class="px-3 py-1.5 transition-all border-l border-[#DCE6E9]"
             :class="editingClient.typeClient==='b2c'?'text-white':'text-navy-300 hover:text-navy-500'"
-            :style="editingClient.typeClient==='b2c'?'background:#024059':''">B2C — Particulier</button>
+            :style="editingClient.typeClient==='b2c'?'background:#024059':''">B2C</button>
         </div>
-        <span x-show="editingClient.typeClient==='b2c'" class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">E-reporting obligatoire dès 09/2027</span>
-        <span x-show="editingClient.typeClient==='b2b'||!editingClient.typeClient" class="text-xs bg-blue-50 border border-blue-200 text-blue-600 rounded-lg px-2 py-1">E-facture obligatoire dès 09/2027</span>
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Nom *</label><input x-model="editingClient.nom" type="text" class="input-field w-full" placeholder="Jean Dupont"></div>
-        <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Entreprise</label><input x-model="editingClient.entreprise" type="text" class="input-field w-full"></div>
-        <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Email</label><input x-model="editingClient.email" type="email" class="input-field w-full"></div>
-        <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Téléphone</label><input x-model="editingClient.telephone" type="tel" class="input-field w-full"></div>
-      </div>
-      <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Rue / Adresse</label><input x-model="editingClient.adresse" type="text" class="input-field w-full" placeholder="12 rue des Studios"></div>
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div class="relative">
-          <label class="block text-xs font-semibold text-navy-200 mb-1.5">Code postal</label>
-          <input x-model="editingClient.codePostal" type="text" inputmode="numeric" maxlength="5"
-            class="input-field w-full font-mono" placeholder="34000"
-            @input="lookupCP(editingClient.codePostal,'client')"
-            @blur="cpLookup.target==='client'&&!cpLookup.suggestions.length?null:null">
+      <span x-show="editingClient.typeClient==='b2c'" class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 inline-block">E-reporting obligatoire dès 09/2027</span>
+      <span x-show="editingClient.typeClient==='b2b'||!editingClient.typeClient" class="text-xs bg-blue-50 border border-blue-200 text-blue-600 rounded-lg px-2 py-1 inline-block">E-facture obligatoire dès 09/2027</span>
+
+      <!-- Recherche SIRET — auto-remplit le reste de la fiche -->
+      <div x-show="editingClient.typeClient==='b2b'||!editingClient.typeClient" class="bg-[#edfcfc] dark:bg-[#011d2b] border border-[#3CD6D1]/40 rounded-xl p-3">
+        <label class="block text-xs font-semibold text-navy-200 mb-1.5">🔍 Rechercher par SIREN / SIRET</label>
+        <div class="flex gap-2">
+          <input x-model="editingClient.siret" type="text" inputmode="numeric" class="input-field flex-1 font-mono" placeholder="000 000 000  ou  000 000 000 00000"
+            @keydown.enter="lookupSiret()">
+          <button @click="lookupSiret()" type="button" class="px-4 py-2 text-sm font-semibold rounded-xl hover:opacity-90 shrink-0 flex items-center gap-1.5" style="background:#3CD6D1;color:#024059">
+            <span x-show="siretLookup.loading" class="inline-block w-3.5 h-3.5 border-2 border-[#024059] border-t-transparent rounded-full animate-spin"></span>
+            Rechercher
+          </button>
         </div>
-        <div class="col-span-2 relative">
-          <label class="block text-xs font-semibold text-navy-200 mb-1.5">Ville</label>
-          <input x-model="editingClient.ville" type="text" class="input-field w-full" placeholder="Montpellier">
-          <!-- Dropdown suggestions CP client -->
-          <div x-show="cpLookup.target==='client' && cpLookup.suggestions.length"
-            class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-[#DCE6E9] rounded-xl shadow-lg overflow-hidden">
-            <template x-for="nom in cpLookup.suggestions" :key="nom">
-              <button type="button" @click.stop="pickVille(nom)"
-                class="w-full text-left px-4 py-2.5 text-sm hover:text-white transition-colors font-medium text-navy-500"
-                style="--tw-hover-bg:#3CD6D1"
-                onmouseover="this.style.background='#3CD6D1';this.style.color='#024059'"
-                onmouseout="this.style.background='';this.style.color=''"
-                x-text="nom"></button>
-            </template>
+        <p x-show="siretLookup.error" class="text-xs text-red-500 mt-1.5" x-text="siretLookup.error"></p>
+        <p x-show="siretLookup.found" class="text-xs text-[#024059] mt-1.5">✓ Fiche complétée automatiquement (Entreprise, adresse) — vérifie et ajuste si besoin.</p>
+      </div>
+
+      <!-- Coordonnées -->
+      <div>
+        <p class="text-xs font-bold text-navy-500 dark:text-white uppercase tracking-wide mb-2">Coordonnées</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Email</label><input x-model="editingClient.email" type="email" class="input-field w-full" placeholder="contact@exemple.fr"></div>
+          <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Téléphone</label><input x-model="editingClient.telephone" type="tel" class="input-field w-full" placeholder="06 00 00 00 00"></div>
+        </div>
+      </div>
+
+      <!-- Adresse -->
+      <div>
+        <p class="text-xs font-bold text-navy-500 dark:text-white uppercase tracking-wide mb-2">Adresse</p>
+        <div class="space-y-3">
+          <input x-model="editingClient.adresse" type="text" class="input-field w-full" placeholder="12 rue des Studios">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div class="relative">
+              <input x-model="editingClient.codePostal" type="text" inputmode="numeric" maxlength="5"
+                class="input-field w-full font-mono" placeholder="Code postal"
+                @input="lookupCP(editingClient.codePostal,'client')"
+                @blur="cpLookup.target==='client'&&!cpLookup.suggestions.length?null:null">
+            </div>
+            <div class="col-span-2 relative">
+              <input x-model="editingClient.ville" type="text" class="input-field w-full" placeholder="Ville">
+              <!-- Dropdown suggestions CP client -->
+              <div x-show="cpLookup.target==='client' && cpLookup.suggestions.length"
+                class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-[#DCE6E9] rounded-xl shadow-lg overflow-hidden">
+                <template x-for="nom in cpLookup.suggestions" :key="nom">
+                  <button type="button" @click.stop="pickVille(nom)"
+                    class="w-full text-left px-4 py-2.5 text-sm hover:text-white transition-colors font-medium text-navy-500"
+                    onmouseover="this.style.background='#3CD6D1';this.style.color='#024059'"
+                    onmouseout="this.style.background='';this.style.color=''"
+                    x-text="nom"></button>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <!-- SIRET/SIREN — visible B2B uniquement -->
-      <div x-show="editingClient.typeClient==='b2b'||!editingClient.typeClient">
-        <label class="block text-xs font-semibold text-navy-200 mb-1.5">SIREN / SIRET <span class="font-normal">(obligatoire pour e-facture B2B)</span></label>
-        <input x-model="editingClient.siret" type="text" class="input-field w-full font-mono" placeholder="000 000 000  ou  000 000 000 00000">
+
+      <!-- Notes -->
+      <div>
+        <p class="text-xs font-bold text-navy-500 dark:text-white uppercase tracking-wide mb-2">Notes</p>
+        <textarea x-model="editingClient.notes" rows="2" class="input-field w-full resize-none" placeholder="Notes internes sur ce client..."></textarea>
       </div>
-      <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Notes</label><textarea x-model="editingClient.notes" rows="2" class="input-field w-full resize-none"></textarea></div>
 
       <!-- ── Contacts supplémentaires ── -->
       <div class="border-t border-[#DCE6E9] dark:border-navy-500 pt-4">
@@ -4924,6 +4952,7 @@ function crm() {
       { id:'perso',    label:'✏️ Perso & Données' },
     ],
     cpLookup: { suggestions:[], target:'' },
+    siretLookup: { loading:false, error:'', found:false },
     claudeState: { type:'projet_notion', contexte:'', result:'', parsedJson:null, loading:false, notionLoading:false, error:'', notionError:'', notionUrl:'', copied:false, saved:false },
     brainstorm: { open:false, texte:'', loading:false, notionUrl:'', notionLoading:false, notionError:'' },
     notionDataPret: false,
@@ -7388,8 +7417,8 @@ ${htmlContent}
         (c.email||'').toLowerCase().includes(q)
       );
     },
-    openNewClient() { this.editingClient={id:null,nom:'',entreprise:'',email:'',telephone:'',adresse:'',codePostal:'',ville:'',siret:'',notes:'',typeClient:'b2b',contacts:[]}; this.clientModalTab='infos'; this.modals.client=true; },
-    editClient(c) { this.editingClient={...c, contacts: c.contacts ? JSON.parse(JSON.stringify(c.contacts)) : []}; this.clientModalTab='infos'; this.modals.client=true; },
+    openNewClient() { this.editingClient={id:null,nom:'',entreprise:'',email:'',telephone:'',adresse:'',codePostal:'',ville:'',siret:'',notes:'',typeClient:'b2b',contacts:[]}; this.clientModalTab='infos'; this.siretLookup={loading:false,error:'',found:false}; this.modals.client=true; },
+    editClient(c) { this.editingClient={...c, contacts: c.contacts ? JSON.parse(JSON.stringify(c.contacts)) : []}; this.clientModalTab='infos'; this.siretLookup={loading:false,error:'',found:false}; this.modals.client=true; },
     saveClient() {
       if(!this.editingClient.nom.trim()) return alert('Nom requis');
       let saved;
@@ -8480,6 +8509,35 @@ Réponds UNIQUEMENT avec le JSON, sans texte autour. Sois concis dans chaque cha
     pickVille(nom) {
       this._setVille(this.cpLookup.target, nom);
       this.cpLookup.suggestions = [];
+    },
+
+    // ── SIRET/SIREN AUTO-COMPLETE (API publique recherche-entreprises.api.gouv.fr) ──
+    async lookupSiret() {
+      const raw = (this.editingClient.siret || '').replace(/\s/g, '');
+      this.siretLookup.error = ''; this.siretLookup.found = false;
+      if (!/^\d{9}(\d{5})?$/.test(raw)) {
+        this.siretLookup.error = 'Numéro invalide — 9 chiffres (SIREN) ou 14 chiffres (SIRET) attendus.';
+        return;
+      }
+      this.siretLookup.loading = true;
+      try {
+        const res = await fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + raw + '&page=1&per_page=1');
+        const data = await res.json();
+        const r = data.results && data.results[0];
+        if (!r) { this.siretLookup.error = 'Aucune entreprise trouvée pour ce numéro.'; return; }
+        const siege = r.siege || {};
+        this.editingClient.entreprise = r.nom_raison_sociale || r.nom_complet || this.editingClient.entreprise;
+        if (!this.editingClient.nom) this.editingClient.nom = r.nom_raison_sociale || r.nom_complet || '';
+        this.editingClient.adresse = [siege.numero_voie, siege.type_voie, siege.libelle_voie].filter(Boolean).join(' ') || this.editingClient.adresse;
+        this.editingClient.codePostal = siege.code_postal || this.editingClient.codePostal;
+        this.editingClient.ville = siege.libelle_commune || this.editingClient.ville;
+        this.editingClient.siret = siege.siret || raw;
+        this.siretLookup.found = true;
+      } catch(e) {
+        this.siretLookup.error = 'Erreur réseau, réessaie.';
+      } finally {
+        this.siretLookup.loading = false;
+      }
     },
 
     // ── E-FACTURE ──
