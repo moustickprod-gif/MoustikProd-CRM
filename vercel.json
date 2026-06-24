@@ -12,7 +12,6 @@
     { "src": "/api/notion",           "dest": "/api/notion.js" },
     { "src": "/api/sign",             "dest": "/api/sign.js" },
     { "src": "/api/submit-signature",  "dest": "/api/submit-signature.js" },
-    { "src": "/api/debug-email",        "dest": "/api/debug-email.js" },
     { "src": "/api/stripe-checkout",   "dest": "/api/stripe-checkout.js" },
     { "src": "/api/stripe-webhook",    "dest": "/api/stripe-webhook.js" },
     { "src": "/sign.html",            "dest": "/sign.html" },

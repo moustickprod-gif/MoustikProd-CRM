@@ -1,4 +1,8 @@
-// Lecture publique d'une demande de signature via Firestore REST API
+import { getFirestoreAccessToken, getFirestoreProjectId } from './_firestoreAuth.js';
+
+// Lecture d'une demande de signature via Firestore REST API, authentifiée par
+// compte de service (IAM) — la collection signatureRequests n'est plus accessible
+// en lecture/écriture directe depuis un client Firestore non authentifié.
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -6,11 +10,11 @@ export default async function handler(req, res) {
   const { token } = req.query;
   if (!token) return res.status(400).json({ error: 'Token manquant' });
 
-  const projectId = 'moustikprod-crm';
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/signatureRequests/${token}`;
-
   try {
-    const response = await fetch(url);
+    const accessToken = await getFirestoreAccessToken();
+    const projectId = getFirestoreProjectId();
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/signatureRequests/${token}`;
+    const response = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
     if (response.status === 404) return res.status(404).json({ error: 'Document introuvable ou lien expiré' });
     if (!response.ok) return res.status(500).json({ error: 'Erreur Firestore' });
 

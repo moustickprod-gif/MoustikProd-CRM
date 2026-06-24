@@ -1,14 +1,20 @@
 import Stripe from 'stripe';
+import { getFirestoreAccessToken, getFirestoreProjectId } from './_firestoreAuth.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const projectId = 'moustikprod-crm';
-const firestoreBase = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 
-// ── Firestore REST helpers ────────────────────────────────────────────────────
+// ── Firestore REST helpers (authentifiés via compte de service) ──────────────
 async function fsGetRaw(path) {
-  const r = await fetch(`${firestoreBase}/${path}`);
-  if (!r.ok) return null;
+  const accessToken = await getFirestoreAccessToken();
+  const projectId = getFirestoreProjectId();
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`, {
+    headers: { 'Authorization': `Bearer ${accessToken}` },
+  });
+  if (!r.ok) {
+    if (r.status !== 404) console.error('[stripe-webhook] fsGetRaw échec', path, r.status, await r.text());
+    return null;
+  }
   return r.json();
 }
 
@@ -19,22 +25,28 @@ async function fsGet(path) {
 }
 
 async function fsSet(path, data) {
-  const r = await fetch(`${firestoreBase}/${path}`, {
+  const accessToken = await getFirestoreAccessToken();
+  const projectId = getFirestoreProjectId();
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: toFs(data) }),
   });
+  if (!r.ok) console.error('[stripe-webhook] fsSet échec', path, r.status, await r.text());
   return r.ok;
 }
 
 // Patch uniquement certains champs (sans écraser tout le document)
 async function fsPatch(path, data, fieldPaths) {
+  const accessToken = await getFirestoreAccessToken();
+  const projectId = getFirestoreProjectId();
   const mask = fieldPaths.map(f => `updateMask.fieldPaths=${encodeURIComponent(f)}`).join('&');
-  const r = await fetch(`${firestoreBase}/${path}?${mask}`, {
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}?${mask}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: toFs(data) }),
   });
+  if (!r.ok) console.error('[stripe-webhook] fsPatch échec', path, r.status, await r.text());
   return r.ok;
 }
 
@@ -285,7 +297,14 @@ async function updateCrmDirectement(userId, updateFn) {
   const updated = updateFn(crmData);
   if (!updated) return null;
 
-  await fsSet(`users/${userId}/data/main`, { ...crmData, ...updated, _updated: new Date().toISOString() });
+  const ok = await fsSet(`users/${userId}/data/main`, { ...crmData, ...updated, _updated: new Date().toISOString() });
+  if (!ok) {
+    // L'écriture a échoué : on alerte par email plutôt que de laisser le paiement
+    // marqué comme traité côté Stripe sans qu'il soit reflété dans le CRM.
+    await sendEmail('contact@moustikprod.fr', '⚠️ Échec mise à jour CRM après paiement Stripe',
+      `<p>Un paiement Stripe a été reçu mais la mise à jour Firestore (users/${userId}/data/main) a échoué. Vérifie manuellement le CRM et les logs Vercel.</p>`);
+    return null;
+  }
   return { ...crmData, ...updated };
 }
 

@@ -1,3 +1,5 @@
+import { getFirestoreAccessToken, getFirestoreProjectId } from './_firestoreAuth.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -10,20 +12,22 @@ export default async function handler(req, res) {
 
   if (!token) return res.status(400).json({ error: 'Token requis' });
 
-  const projectId = 'moustikprod-crm';
+  const accessToken = await getFirestoreAccessToken();
+  const authHeaders = { 'Authorization': `Bearer ${accessToken}` };
+  const projectId = getFirestoreProjectId();
   const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/signatureRequests/${token}`;
 
   // ── Cas refus ──
   if (decision === 'refusé') {
     try {
-      const getResp = await fetch(baseUrl);
+      const getResp = await fetch(baseUrl, { headers: authHeaders });
       if (!getResp.ok) return res.status(404).json({ error: 'Document introuvable' });
       const { fields = {} } = await getResp.json();
       const getStr = f => fields[f]?.stringValue || '';
 
       const patchUrl = `${baseUrl}?updateMask.fieldPaths=statut&updateMask.fieldPaths=decision&updateMask.fieldPaths=raisonRefus&updateMask.fieldPaths=commentaireRefus&updateMask.fieldPaths=dateRefus`;
       const patchResp = await fetch(patchUrl, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH', headers: { ...authHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: {
           statut:           { stringValue: 'refusé' },
           decision:         { stringValue: 'refusé' },
@@ -81,7 +85,7 @@ export default async function handler(req, res) {
 
   try {
     // Lire le document existant
-    const getResponse = await fetch(baseUrl);
+    const getResponse = await fetch(baseUrl, { headers: authHeaders });
     if (!getResponse.ok) return res.status(404).json({ error: 'Document introuvable' });
 
     const existing = await getResponse.json();
@@ -126,7 +130,7 @@ export default async function handler(req, res) {
 
     const patchResponse = await fetch(patchUrl, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: fieldsToWrite })
     });
 
