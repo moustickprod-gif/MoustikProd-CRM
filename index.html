@@ -678,10 +678,33 @@
     <div x-show="currentView==='devis'" x-cloak class="fade-in p-4 md:p-8">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-navy-500 dark:text-white">Devis</h1>
-        <button @click="openNewDevis()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90" style="background:#3CD6D1;color:#024059">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-          Nouveau devis
-        </button>
+        <div class="flex gap-2">
+          <button @click="modals.templatePicker=true" x-show="templatesDevis.length>0" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 border-[#DCE6E9] hover:border-teal-300 text-navy-400 dark:text-white/80 transition-all">
+            📋 Utiliser un modèle
+          </button>
+          <button @click="openNewDevis()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90" style="background:#3CD6D1;color:#024059">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            Nouveau devis
+          </button>
+        </div>
+      </div>
+
+      <!-- Sélecteur de modèle -->
+      <div x-show="modals.templatePicker" x-cloak class="modal-bg" style="z-index:200" @click.self="modals.templatePicker=false">
+        <div class="bg-white dark:bg-[#012e40] rounded-2xl w-full max-w-md shadow-2xl fade-in max-h-[85vh] flex flex-col" @click.stop>
+          <div class="flex items-center justify-between px-6 py-4 border-b border-[#DCE6E9] dark:border-navy-500 flex-shrink-0">
+            <h2 class="font-bold text-navy-500 dark:text-white">Choisir un modèle</h2>
+            <button @click="modals.templatePicker=false" class="p-2 rounded-xl hover:bg-[#DCE6E9] text-navy-200">✕</button>
+          </div>
+          <div class="p-5 space-y-2 overflow-y-auto">
+            <template x-for="t in templatesDevis" :key="t.id">
+              <button @click="applyTemplateDevis(t)" class="w-full text-left p-3 rounded-xl border border-[#DCE6E9] hover:border-teal-300 transition-all">
+                <p class="text-sm font-semibold text-navy-500 dark:text-white" x-text="t.nom"></p>
+                <p class="text-xs text-navy-200" x-text="t.itemIds.length + ' prestation(s)'"></p>
+              </button>
+            </template>
+          </div>
+        </div>
       </div>
       <div class="bg-white dark:bg-navy-600 rounded-2xl border border-[#DCE6E9] dark:border-navy-400 overflow-hidden">
         <table class="w-full">
@@ -972,10 +995,32 @@
           <p class="text-xs text-navy-200 mt-0.5">Base tarifaire — utilisée pour générer les devis automatiquement</p>
         </div>
         <div class="flex gap-2 flex-wrap">
+          <button @click="openNewTemplate()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold flex-shrink-0 border-2 border-[#DCE6E9] hover:border-teal-300 text-navy-400 dark:text-white/80 transition-all">
+            📋 Nouveau modèle de devis
+          </button>
           <button @click="openNewPrestation()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold flex-shrink-0" style="background:#3CD6D1;color:#024059">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Nouvelle prestation
           </button>
+        </div>
+      </div>
+
+      <!-- Modèles de devis -->
+      <div x-show="templatesDevis.length>0" class="mb-6">
+        <h2 class="text-xs font-bold uppercase tracking-widest mb-2 px-1" style="color:#3CD6D1">Modèles de devis</h2>
+        <div class="bg-white dark:bg-navy-600 rounded-2xl border border-[#DCE6E9] dark:border-navy-400 overflow-hidden">
+          <template x-for="t in templatesDevis" :key="t.id">
+            <div class="flex items-center gap-3 px-4 py-3 border-b border-[#F0F5F7] dark:border-navy-500 last:border-0 hover:bg-[#F8FBFC] dark:hover:bg-navy-500 transition-colors group">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-navy-500 dark:text-white truncate" x-text="t.nom"></p>
+                <p class="text-xs text-navy-200" x-text="t.itemIds.length + ' prestation(s)'"></p>
+              </div>
+              <button @click="openEditTemplate(t)" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-[#F0F5F7] dark:hover:bg-navy-400 text-navy-200 hover:text-navy-500 transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+              </button>
+              <button @click="deleteTemplate(t.id)" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-navy-200 hover:text-red-500 transition-all">✕</button>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -2787,6 +2832,39 @@
         <button x-show="editingPrestation.id" @click="deletePrestation()"
           class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-50 text-red-500 hover:bg-red-100">Supprimer</button>
         <button @click="savePrestation()" class="flex-1 py-2.5 rounded-xl text-sm font-bold hover:opacity-90" style="background:#3CD6D1;color:#024059">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal Modèle de devis ══ -->
+<div x-show="modals.templateDevis" x-cloak class="modal-bg" style="z-index:200" @click.self="modals.templateDevis=false">
+  <div class="bg-white dark:bg-[#012e40] rounded-2xl w-full max-w-lg shadow-2xl fade-in max-h-[85vh] flex flex-col" @click.stop>
+    <div class="flex items-center justify-between px-6 py-4 border-b border-[#DCE6E9] dark:border-navy-500 flex-shrink-0">
+      <h2 class="font-bold text-navy-500 dark:text-white" x-text="editingTemplate.id ? 'Modifier le modèle' : 'Nouveau modèle de devis'"></h2>
+      <button @click="modals.templateDevis=false" class="p-2 rounded-xl hover:bg-[#DCE6E9] text-navy-200">✕</button>
+    </div>
+    <div class="p-5 space-y-4 overflow-y-auto">
+      <div>
+        <label class="label-field">Nom du modèle</label>
+        <input x-model="editingTemplate.nom" placeholder="Ex: Pack Mariage, Pack Corporate..." class="input-field w-full">
+      </div>
+      <div>
+        <label class="label-field">Prestations incluses</label>
+        <div class="space-y-1 max-h-72 overflow-y-auto border border-[#DCE6E9] rounded-xl p-2">
+          <template x-for="p in catalogue" :key="p.id">
+            <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#F0F5F7] dark:hover:bg-navy-500 cursor-pointer text-sm">
+              <input type="checkbox" :checked="editingTemplate.itemIds.includes(p.id)" @change="toggleTemplateItem(p.id)" class="accent-teal-400">
+              <span class="flex-1 text-navy-500 dark:text-white" x-text="p.nom"></span>
+              <span class="text-xs text-navy-200" x-text="formatMoney(p.prixMin)"></span>
+            </label>
+          </template>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button x-show="editingTemplate.id" @click="deleteTemplate(editingTemplate.id); modals.templateDevis=false"
+          class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-50 text-red-500 hover:bg-red-100">Supprimer</button>
+        <button @click="saveTemplate()" class="flex-1 py-2.5 rounded-xl text-sm font-bold hover:opacity-90" style="background:#3CD6D1;color:#024059">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -5004,7 +5082,7 @@ function crm() {
     darkMode: false,
     clientSearch: '',
     projetFilterClient: '',
-    clients: [], projets: [], devisListe: [], factures: [], transactions: [], urssafDeclarations: {}, catalogue: [],
+    clients: [], projets: [], devisListe: [], factures: [], transactions: [], urssafDeclarations: {}, catalogue: [], templatesDevis: [],
     settings: {
       // Identité
       nomComplet:'', nom:'MoustikProd', formeJuridique:'EI', activite:'Production audiovisuelle, montage vidéo',
@@ -5055,7 +5133,8 @@ function crm() {
     notionDataPret: false,
     notionPayload: null,
     devisAide: { open:false, description:'', loading:false, suggestion:null },
-    modals: { client:false, projet:false, projetCatalogue:false, docEdit:false, print:false, transaction:false, claude:false, prestation:false, cataloguePicker:false, contrat:false, contratPreview:false, autorisation:false, autorisationPreview:false, musique:false, musiquePreview:false, signatureLien:false, droitImage:false, packWizard:false },
+    modals: { client:false, projet:false, projetCatalogue:false, docEdit:false, print:false, transaction:false, claude:false, prestation:false, cataloguePicker:false, contrat:false, contratPreview:false, autorisation:false, autorisationPreview:false, musique:false, musiquePreview:false, signatureLien:false, droitImage:false, packWizard:false, templateDevis:false, templatePicker:false },
+    editingTemplate: { id:null, nom:'', itemIds:[] },
     packWizard: { devis:null, step:1, isB2C:false, contrat:null, proposeDroitImage:false },
     wizardSigPad: null,
     clientModalTab: 'infos',
@@ -5224,6 +5303,7 @@ function crm() {
           this.transactions         = d.transactions         || [];
           this.urssafDeclarations   = d.urssafDeclarations   || {};
           this.settings             = { ...this.settings, ...(d.settings || {}) };
+          this.templatesDevis       = d.templatesDevis       || [];
           // Initialiser les articles CGV si absents
           if (!this.settings.cgvArticles || !this.settings.cgvArticles.length) {
             this.settings.cgvArticles = this._defaultCgv();
@@ -5459,6 +5539,7 @@ function crm() {
           transactions: this.transactions,
           urssafDeclarations: this.urssafDeclarations,
           settings: this.settings,
+          templatesDevis: this.templatesDevis,
           _updated: new Date().toISOString(),
         });
       } catch(e) { console.error('Firestore save error', e); }
@@ -5667,6 +5748,53 @@ function crm() {
         tva: 0,
         fraisDebours: p.cat === 'Frais & Débours',
       });
+    },
+
+    // ── MODÈLES DE DEVIS (bundles de prestations du catalogue) ──
+    openNewTemplate() {
+      this.editingTemplate = { id:null, nom:'', itemIds:[] };
+      this.modals.templateDevis = true;
+    },
+    openEditTemplate(t) {
+      this.editingTemplate = { ...t, itemIds:[...t.itemIds] };
+      this.modals.templateDevis = true;
+    },
+    toggleTemplateItem(id) {
+      const i = this.editingTemplate.itemIds.indexOf(id);
+      if (i === -1) this.editingTemplate.itemIds.push(id);
+      else this.editingTemplate.itemIds.splice(i, 1);
+    },
+    async saveTemplate() {
+      if (!this.editingTemplate.nom || !this.editingTemplate.itemIds.length) return;
+      if (this.editingTemplate.id) {
+        const i = this.templatesDevis.findIndex(t => t.id === this.editingTemplate.id);
+        this.templatesDevis[i] = { ...this.editingTemplate };
+      } else {
+        this.templatesDevis.push({ ...this.editingTemplate, id: this.uid() });
+      }
+      await this.save();
+      this.modals.templateDevis = false;
+    },
+    async deleteTemplate(id) {
+      if (!confirm('Supprimer ce modèle de devis ?')) return;
+      this.templatesDevis = this.templatesDevis.filter(t => t.id !== id);
+      await this.save();
+    },
+    // Crée un nouveau devis pré-rempli avec toutes les prestations du modèle.
+    applyTemplateDevis(t) {
+      this.openNewDevis();
+      const lignes = t.itemIds.map(id => this.catalogue.find(p => p.id === id)).filter(Boolean).map(p => ({
+        description: p.nom + (p.unite !== 'forfait' ? ' / ' + p.unite : ''),
+        quantite: 1,
+        prixUnitaire: p.prixMin,
+        prixMin: p.prixMin,
+        prixMax: p.prixMax,
+        tva: 0,
+        fraisDebours: p.cat === 'Frais & Débours',
+      }));
+      if (lignes.length) this.editingDoc.lignes = lignes;
+      this.modals.templatePicker = false;
+      this.modals.docEdit = true;
     },
     async suggererLignesDevis() {
       if (!this.devisAide.description.trim()) return;
