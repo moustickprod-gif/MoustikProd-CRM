@@ -7,6 +7,7 @@
     { "src": "*.ico",  "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/claude",           "dest": "/api/claude.js" },
     { "src": "/api/send-email",       "dest": "/api/send-email.js" },
     { "src": "/api/notion",           "dest": "/api/notion.js" },
     { "src": "/api/sign",             "dest": "/api/sign.js" },

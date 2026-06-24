@@ -2444,23 +2444,16 @@
           <div class="p-6 space-y-3">
             <!-- Claude -->
             <div>
-              <label class="label-field">Clé API Claude (Anthropic)</label>
-              <div class="flex gap-2 items-center">
-                <input x-model="settings.anthropicKey" type="password"
-                  placeholder="sk-ant-api03-…"
-                  class="input-field flex-1 font-mono text-sm"
-                  autocomplete="off">
-                <button x-show="settings.anthropicKey" @click="testerClaude()"
+              <label class="label-field">Assistant Claude</label>
+              <div class="flex items-center gap-2">
+                <button @click="testerClaude()"
                   class="px-3 py-2 text-xs font-semibold rounded-lg border-2 border-[#DCE6E9] hover:border-teal-300 text-navy-400 transition-all flex-shrink-0">
-                  🔌 Tester
+                  🔌 Tester la connexion
                 </button>
               </div>
-              <p class="text-xs text-navy-200 mt-1">
-                Obtiens ta clé sur <strong>console.anthropic.com</strong> → API Keys.
-              </p>
-              <div x-show="settings.anthropicKey" class="flex items-center gap-2 text-xs text-green-600 font-semibold mt-1">
+              <div class="flex items-center gap-2 text-xs text-green-600 font-semibold mt-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                Clé configurée — l'assistant Claude est actif sur tes projets
+                Connecté via le serveur — l'assistant Claude est actif sur tes projets
               </div>
             </div>
             <div class="border-t border-[#DCE6E9] pt-4 mt-4">
@@ -4474,7 +4467,7 @@
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
               Du catalogue
             </button>
-            <button x-show="editingDoc.docType==='devis' && settings.anthropicKey" @click="devisAide.open=!devisAide.open"
+            <button x-show="editingDoc.docType==='devis'" @click="devisAide.open=!devisAide.open"
               class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
               :style="devisAide.open ? 'background:#6d28d9;color:#fff;border:1px solid #6d28d9' : 'background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd'">
               ✨ Aide Claude
@@ -5637,21 +5630,16 @@ function crm() {
       });
     },
     async suggererLignesDevis() {
-      if (!this.settings.anthropicKey || !this.devisAide.description.trim()) return;
+      if (!this.devisAide.description.trim()) return;
       const catalogueJson = JSON.stringify(this.catalogue.map(p => ({
         nom: p.nom, cat: p.cat, prixMin: p.prixMin, prixMax: p.prixMax, unite: p.unite
       })));
       this.devisAide.loading = true;
       this.devisAide.suggestion = null;
       try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('/api/claude', {
           method: 'POST',
-          headers: {
-            'x-api-key': (this.settings.anthropicKey||'').trim(),
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-            'content-type': 'application/json',
-          },
+          headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
             max_tokens: 1024,
@@ -8249,10 +8237,6 @@ ${tvaXML}
     },
 
     async genererAvecClaude() {
-      if (!this.settings.anthropicKey) {
-        this.claudeState.error = 'Clé API Anthropic manquante — renseigne-la dans Paramètres → Perso & Données.';
-        return;
-      }
       this.claudeState.loading = true;
       this.claudeState.error = '';
       this.claudeState.result = '';
@@ -8260,14 +8244,9 @@ ${tvaXML}
       this.claudeState.notionUrl = '';
       const userPrompt = 'Voici le contexte du projet :\n\n' + this.claudeState.contexte;
       try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('/api/claude', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': this.settings.anthropicKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
             max_tokens: 2048,
@@ -8410,7 +8389,7 @@ ${tvaXML}
     },
 
     async analyserEtRemplir() {
-      if (!this.brainstorm.texte.trim() || !this.settings.anthropicKey) return;
+      if (!this.brainstorm.texte.trim()) return;
       const texteMax = this.brainstorm.texte.length > 3000
         ? this.brainstorm.texte.slice(0, 3000) + '...[tronqué]'
         : this.brainstorm.texte;
@@ -8419,9 +8398,9 @@ ${tvaXML}
       this.notionDataPret = false;
       this.notionPayload = null;
       try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('/api/claude', {
           method: 'POST',
-          headers: { 'Content-Type':'application/json', 'x-api-key': this.settings.anthropicKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+          headers: { 'Content-Type':'application/json' },
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
             max_tokens: 4000,
@@ -8479,19 +8458,15 @@ Sois concis dans chaque champ (max 300 caractères). Réponds UNIQUEMENT avec le
 
     async structurerEtEnvoyerNotion() {
       if (!this.brainstorm.texte.trim()) return;
-      if (!this.settings.anthropicKey) {
-        this.brainstorm.notionError = 'Clé API Anthropic manquante — configure-la dans Paramètres.';
-        return;
-      }
       const texte = this.brainstorm.texte;
       const texteMax = texte.length > 3000 ? texte.slice(0, 3000) + '...[tronqué]' : texte;
       this.brainstorm.loading = true;
       this.brainstorm.notionError = '';
       this.brainstorm.notionUrl = '';
       try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('/api/claude', {
           method: 'POST',
-          headers: { 'Content-Type':'application/json', 'x-api-key': this.settings.anthropicKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+          headers: { 'Content-Type':'application/json' },
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
             max_tokens: 4000,
@@ -8520,11 +8495,10 @@ Réponds UNIQUEMENT avec le JSON, sans texte autour. Sois concis dans chaque cha
     },
 
     async testerClaude() {
-      if (!this.settings.anthropicKey) return;
       try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch('/api/claude', {
           method: 'POST',
-          headers: { 'Content-Type':'application/json', 'x-api-key': this.settings.anthropicKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+          headers: { 'Content-Type':'application/json' },
           body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:10, messages:[{role:'user',content:'ping'}] }),
         });
         this.showToast(res.ok ? '✅ Claude — connexion réussie !' : '❌ Claude — erreur ' + res.status);
