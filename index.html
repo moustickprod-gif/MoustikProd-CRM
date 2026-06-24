@@ -427,6 +427,33 @@
       </div>
     </div>
 
+    <!-- CALENDRIER -->
+    <div x-show="currentView==='calendrier'" x-cloak class="fade-in p-4 md:p-8">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-navy-500 dark:text-white">Calendrier</h1>
+        <p class="text-sm text-navy-300 dark:text-white/50 mt-0.5">Deadlines projets, échéances factures et déclarations URSSAF — vue unifiée.</p>
+      </div>
+      <div x-data="{evts: evenementsCalendrier()}" x-init="$watch(() => [projets.length, factures.length, urssafDeclarations], () => evts = evenementsCalendrier())">
+        <div x-show="evts.length===0" class="bg-white dark:bg-navy-600 rounded-2xl border border-[#DCE6E9] p-10 text-center text-navy-300">
+          Aucune échéance à venir.
+        </div>
+        <div class="space-y-2">
+          <template x-for="evt in evts" :key="evt.date + evt.label">
+            <div @click="evt.onClick()" class="flex items-center gap-4 bg-white dark:bg-navy-600 rounded-xl border p-4 cursor-pointer hover:border-[#3CD6D1] transition-all"
+              :class="evt.passee ? 'border-[#DCE6E9] opacity-50' : evt.urgent ? 'border-red-300' : 'border-[#DCE6E9]'">
+              <div class="text-2xl shrink-0" x-text="evt.icon"></div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-navy-500 dark:text-white truncate" x-text="evt.label"></p>
+                <p class="text-xs text-navy-300 dark:text-white/50" x-text="new Date(evt.date).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})"></p>
+              </div>
+              <span x-show="evt.urgent && !evt.passee" class="badge bg-red-100 text-red-600 shrink-0">Urgent</span>
+              <span x-show="evt.passee" class="badge bg-gray-100 text-gray-500 shrink-0">Passée</span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- CLIENTS -->
     <div x-show="currentView==='clients'" x-cloak class="fade-in p-4 md:p-8">
       <div class="flex items-center justify-between mb-6">
@@ -5153,6 +5180,7 @@ function crm() {
       }
       this.navItems = [
         { id:'dashboard', label:'Tableau de bord', badge:null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>' },
+        { id:'calendrier', label:'Calendrier',     badge:()=>this.evenementsCalendrier().filter(e=>e.urgent).length||null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0V11.25A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>' },
         { id:'clients',   label:'Clients',         badge:null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>' },
         { id:'projets',   label:'Projets',         badge:()=>this.projets.filter(p=>['en_cours','montage','livraison'].includes(p.statut)).length, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>' },
         { id:'devis',     label:'Devis',           badge:null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>' },
@@ -8924,6 +8952,54 @@ Réponds UNIQUEMENT avec le JSON, sans texte autour. Sois concis dans chaque cha
         total: Math.round(ca * (tauxCS + tauxCFP + tauxVL) * 100) / 100,
         revenusNets: Math.round(ca * (1 - tauxCS - tauxCFP - tauxVL) * 100) / 100,
       };
+    },
+    // ── CALENDRIER UNIFIÉ ──
+    // Agrège : deadlines projets (CRM + Studio, même Firestore partagé),
+    // échéances factures impayées, et déclarations URSSAF à venir.
+    evenementsCalendrier() {
+      const todayStr = today();
+      const events = [];
+      const joursRestants = (dateStr) => Math.ceil((new Date(dateStr) - new Date(todayStr)) / (24*3600*1000));
+
+      for (const p of this.projets) {
+        const date = p.dateFin || p.deadlineStudio;
+        if (!date) continue;
+        if (['termine','annule'].includes(p.statut)) continue;
+        const client = this.clients.find(c => c.id === p.clientId);
+        events.push({
+          date, type:'projet', icon:'🎬',
+          label: `Deadline projet — ${p.titre}${client ? ' (' + client.nom + ')' : ''}`,
+          urgent: joursRestants(date) <= 3,
+          passee: date < todayStr,
+          onClick: () => { this.currentView='projets'; this.openProjet(p); },
+        });
+      }
+
+      for (const f of this.factures) {
+        if (f.statut === 'payee' || !f.echeance) continue;
+        const client = this.clients.find(c => c.id === f.clientId);
+        events.push({
+          date: f.echeance, type:'facture', icon:'💶',
+          label: `Échéance facture ${f.numero}${client ? ' — ' + client.nom : ''}`,
+          urgent: joursRestants(f.echeance) <= 7,
+          passee: f.echeance < todayStr,
+          onClick: () => { this.currentView='factures'; this.openFacture(f); },
+        });
+      }
+
+      const periodes = this.periodesUrssaf('trim');
+      for (const per of periodes) {
+        if (this.urssafDeclarations[per.key] || per.echeanceStr < todayStr) continue;
+        events.push({
+          date: per.echeanceStr, type:'urssaf', icon:'🏛️',
+          label: `Déclaration URSSAF — ${per.label}`,
+          urgent: joursRestants(per.echeanceStr) <= 14,
+          passee: false,
+          onClick: () => { this.currentView='urssaf'; },
+        });
+      }
+
+      return events.sort((a,b) => a.date.localeCompare(b.date));
     },
     prochainEcheanceUrssaf() {
       const periodes = this.periodesUrssaf('trim');
