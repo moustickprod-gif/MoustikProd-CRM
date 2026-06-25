@@ -2973,7 +2973,7 @@
             </div>
             <div class="flex items-center gap-3 text-right">
               <span class="text-xs text-navy-200" x-text="d.date"></span>
-              <span class="text-sm font-bold text-navy-500 dark:text-white" x-text="formatMontant(totalApresRemise(d)) + ' €'"></span>
+              <span class="text-sm font-bold text-navy-500 dark:text-white" x-text="formatMoney(totalApresRemise(d))"></span>
             </div>
           </div>
         </template>
@@ -2999,7 +2999,7 @@
             </div>
             <div class="flex items-center gap-3 text-right">
               <span class="text-xs text-navy-200" x-text="f.date"></span>
-              <span class="text-sm font-bold text-navy-500 dark:text-white" x-text="formatMontant(totalApresRemise(f)) + ' €'"></span>
+              <span class="text-sm font-bold text-navy-500 dark:text-white" x-text="formatMoney(totalApresRemise(f))"></span>
             </div>
           </div>
         </template>
@@ -3007,7 +3007,7 @@
       <!-- CA client -->
       <div class="mt-5 pt-4 border-t border-[#DCE6E9] dark:border-navy-500 flex justify-between items-center">
         <span class="text-xs font-semibold text-navy-200">CA encaissé (factures payées)</span>
-        <span class="text-base font-bold text-[#024059] dark:text-[#3CD6D1]" x-text="formatMontant(caClient(editingClient.id)) + ' €'"></span>
+        <span class="text-base font-bold text-[#024059] dark:text-[#3CD6D1]" x-text="formatMoney(caClient(editingClient.id))"></span>
       </div>
     </div>
     <!-- TAB INFOS -->
@@ -4731,7 +4731,7 @@
           <span class="text-navy-300">Sous-total HT</span>
           <span class="font-semibold text-navy-500" x-text="totalHT(editingDoc).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'"></span>
         </div>
-        <template x-for="l in editingDoc.lignes.filter(l=>(l.remise||0)>0)" :key="l.description">
+        <template x-for="l in (editingDoc.lignes||[]).filter(l=>(l.remise||0)>0)" :key="l.description">
           <div class="flex justify-between items-center text-xs text-green-600 mb-0.5">
             <span x-text="'Remise ligne '+l.remise+'% ('+( l.description||'...' ).slice(0,20)+')'"></span>
             <span x-text="'−'+(((l.quantite||0)*(l.prixUnitaire||0)*(l.remise||0)/100)).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'"></span>
