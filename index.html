@@ -584,6 +584,9 @@
                       <div class="flex-1 px-5 py-4 min-w-0">
                         <div class="flex items-start gap-3 mb-2">
                           <p class="font-bold text-base text-navy-500 dark:text-white leading-snug flex-1 truncate" x-text="p.titre||'Sans titre'"></p>
+                          <span x-show="p.statutStudio !== undefined" title="Ce projet est géré dans Moustikprod Studio (pitch, scénario, découpage...)"
+                            class="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
+                            style="background:#024059;color:#3CD6D1">🎬 Studio</span>
                           <span x-show="p.typePrestation"
                             class="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full"
                             style="background:#edfcfc;color:#024059"
@@ -3172,7 +3175,11 @@
       <!-- Header -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-[#DCE6E9] dark:border-navy-500 flex-shrink-0">
         <div>
-          <h2 class="font-bold text-navy-500 dark:text-white" x-text="editingProjet.id?editingProjet.titre||'Projet':'Nouveau projet'"></h2>
+          <div class="flex items-center gap-2">
+            <h2 class="font-bold text-navy-500 dark:text-white" x-text="editingProjet.id?editingProjet.titre||'Projet':'Nouveau projet'"></h2>
+            <span x-show="editingProjet.statutStudio !== undefined" title="Le contenu créatif (pitch, scénario, découpage...) de ce projet se gère dans Moustikprod Studio — pas ici."
+              class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:#024059;color:#3CD6D1">🎬 Studio</span>
+          </div>
           <p x-show="projetDiscovery.claudeNote" class="text-xs mt-0.5 font-medium" style="color:#3CD6D1" x-text="projetDiscovery.claudeNote"></p>
         </div>
         <button @click="closeProjetModal()" class="p-2 rounded-xl hover:bg-[#DCE6E9] text-navy-200">✕</button>
