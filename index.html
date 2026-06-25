@@ -5627,6 +5627,13 @@ function crm() {
         // Frais & Débours
         { id:uid(), nom:'🚗 Frais de déplacement', cat:'Frais & Débours', prixMin:0.518, prixMax:0.518, unite:'km', description:'Indemnités kilométriques au barème URSSAF (au-delà de 50 km du lieu d\'activité). Kia Picanto 4CV — 0,518 €/km jusqu\'à 5 000 km/an. Applicable uniquement au-delà de 50 km de Montpellier (aller-retour comptabilisé).' },
         { id:uid(), nom:'🏨 Frais d\'hébergement', cat:'Frais & Débours', prixMin:90, prixMax:90, unite:'nuit', description:'Hébergement sur justificatif lors des déplacements professionnels (plafond URSSAF : 90€/nuit hôtel, repas 20,20€). Facturation au réel sur présentation de justificatif.' },
+        // Prestations types — visibles dès le premier chargement pour montrer un catalogue complet
+        { id:uid(), nom:'Vidéo corporate 2min', cat:'Corporate', prixMin:900, prixMax:900, unite:'forfait', description:'Vidéo institutionnelle de 2 minutes, du brief au montage final, prête à diffuser sur site web et réseaux pro.' },
+        { id:uid(), nom:'Reel / Short 30s', cat:'Réseaux sociaux', prixMin:350, prixMax:350, unite:'forfait', description:'Format court vertical de 30 secondes, tournage et montage inclus, optimisé pour Instagram et TikTok.' },
+        { id:uid(), nom:'Aftermovie événementiel', cat:'Storytelling', prixMin:1200, prixMax:1200, unite:'forfait', description:'Captation et montage immersif d\'un événement (festival, soirée, conférence), restitution de l\'ambiance et des moments forts.' },
+        { id:uid(), nom:'Interview filmée', cat:'Corporate', prixMin:600, prixMax:600, unite:'forfait', description:'Interview professionnelle, installation multi-caméra, éclairage et son soignés, montage avec plans de coupe.' },
+        { id:uid(), nom:'Pack TikTok x5 vidéos', cat:'Réseaux sociaux', prixMin:800, prixMax:800, unite:'forfait', description:'Production de 5 vidéos courtes verticales clés en main pour TikTok/Instagram, tournage groupé et montage inclus.' },
+        { id:uid(), nom:'Montage seul (rushes fournis)', cat:'Montage', prixMin:250, prixMax:250, unite:'forfait', description:'Montage à partir de rushes déjà tournés et fournis par le client, étalonnage et habillage de base inclus.' },
       ];
     },
     openNewPrestation() {
