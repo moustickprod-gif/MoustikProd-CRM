@@ -2667,7 +2667,7 @@
       </div>
 
       <!-- Bouton save bas de page -->
-      <div class="flex justify-end pt-4">
+      <div x-show="currentView==='settings'" class="flex justify-end pt-4">
         <button @click="save(); settingsSaved=true; setTimeout(()=>settingsSaved=false,2500)"
           class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90" style="background:#3CD6D1;color:#024059">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
