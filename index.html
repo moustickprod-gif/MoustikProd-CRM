@@ -5183,13 +5183,17 @@ function crm() {
     filterTresoSearch: '',
     moisLabels: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
 
+    // Pipeline partagé avec le Studio (mêmes slugs stockés en Firestore — voir
+    // moustikprod-studio/index.html "statusPipeline") : prospection, brief,
+    // pre-production, tournage, montage, livraison, facture.
     statutsPipeline: [
-      { key:'prospection',  label:'Prospection',   color:'#a78bfa' },
-      { key:'devis_envoye', label:'Devis envoyé',  color:'#60a5fa' },
-      { key:'en_cours',     label:'En cours',      color:'#3CD6D1' },
-      { key:'montage',      label:'En montage',    color:'#fbbf24' },
-      { key:'livraison',    label:'Livraison',     color:'#34d399' },
-      { key:'facture',      label:'Facturé',       color:'#4ade80' },
+      { key:'prospection',     label:'Prospection',      color:'#a78bfa' },
+      { key:'brief',           label:'Brief',            color:'#60a5fa' },
+      { key:'pre-production',  label:'Pré-production',   color:'#38bdf8' },
+      { key:'tournage',        label:'Tournage',         color:'#3CD6D1' },
+      { key:'montage',         label:'Montage',          color:'#fbbf24' },
+      { key:'livraison',       label:'Livraison',        color:'#34d399' },
+      { key:'facture',         label:'Facturé',          color:'#4ade80' },
     ],
 
     get todayLabel() {
@@ -5268,7 +5272,7 @@ function crm() {
         { id:'dashboard', label:'Tableau de bord', badge:null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>' },
         { id:'calendrier', label:'Calendrier',     badge:()=>this.evenementsCalendrier().filter(e=>e.urgent).length||null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0V11.25A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>' },
         { id:'clients',   label:'Clients',         badge:null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>' },
-        { id:'projets',   label:'Projets',         badge:()=>this.projets.filter(p=>['en_cours','montage','livraison'].includes(p.statut)).length, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>' },
+        { id:'projets',   label:'Projets',         badge:()=>this.projets.filter(p=>['brief','pre-production','tournage','montage','livraison'].includes(p.statut)).length, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>' },
         { id:'devis',     label:'Devis',           badge:null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>' },
         { id:'factures',  label:'Factures',        badge:()=>this.factures.filter(f=>f.statut!=='payee').length, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>' },
         { id:'contrats',  label:'Contrats',         badge:()=>this.contrats.filter(c=>c.statut==='brouillon').length||null, icon:'<svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/></svg>' },
@@ -5303,6 +5307,7 @@ function crm() {
         ]);
         this.clients = clientsSnap.docs.map(d => d.data());
         this.projets = projetsSnap.docs.map(d => d.data());
+        this._migrateStatutsProjets();
         if (snapMain.exists()) {
           const d = snapMain.data();
           this.devisListe           = d.devisListe           || [];
@@ -7725,6 +7730,17 @@ ${htmlContent}
     initials(n) { return (n||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); },
 
     // ── PROJETS ──
+    // Migration ponctuelle : anciens slugs de statut (avant l'unification avec le
+    // pipeline du Studio) vers les nouveaux. À supprimer une fois les données migrées.
+    _migrateStatutsProjets() {
+      const map = { devis_envoye:'brief', en_cours:'tournage' };
+      for (const p of this.projets) {
+        if (map[p.statut]) {
+          p.statut = map[p.statut];
+          this.saveProjetDoc(p);
+        }
+      }
+    },
     filteredProjets() {
       if(!this.projetFilterClient) return this.projets;
       return this.projets.filter(p=>p.clientId===this.projetFilterClient);
@@ -8376,12 +8392,12 @@ ${tvaXML}
       return [
         {label:'CA ce mois',value:this.formatMoney(fMois.reduce((s,f)=>s+this.totalTTC(f),0)),sub:'Factures payées',bg:'#edfcfc',icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#3CD6D1"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>'},
         {label:'CA annuel',value:this.formatMoney(fAn.reduce((s,f)=>s+this.totalTTC(f),0)),sub:yr+' — payé',bg:'#f0fdf4',icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#22c55e"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>'},
-        {label:'Projets actifs',value:this.projets.filter(p=>['en_cours','montage','livraison'].includes(p.statut)).length,sub:'En production',bg:'#eff6ff',icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>'},
+        {label:'Projets actifs',value:this.projets.filter(p=>['brief','pre-production','tournage','montage','livraison'].includes(p.statut)).length,sub:'En production',bg:'#eff6ff',icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>'},
         {label:'Impayés',value:this.formatMoney(this.factures.filter(f=>f.statut!=='payee').reduce((s,f)=>s+this.totalTTC(f),0)),sub:this.factures.filter(f=>f.statut!=='payee').length+' facture(s)',bg:'#fffbeb',icon:'<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#f59e0b"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>'},
       ];
     },
     todoItems() {
-      return this.projets.filter(p=>['en_cours','montage','livraison','devis_envoye'].includes(p.statut)).slice(0,6);
+      return this.projets.filter(p=>['brief','pre-production','tournage','montage','livraison'].includes(p.statut)).slice(0,6);
     },
     facturesImpayees() { return this.factures.filter(f=>f.statut!=='payee').slice(0,4); },
     totalPayees() { return this.factures.filter(f=>f.statut==='payee').reduce((s,f)=>s+this.totalTTC(f),0); },
