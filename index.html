@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr" x-data="crm()" x-init="init()" :class="darkMode ? 'dark' : ''">
 <head>
   <meta charset="UTF-8" />
@@ -325,6 +325,22 @@
         </template>
       </div>
 
+      <!-- ── Clients par secteur ── -->
+      <div class="bg-white dark:bg-navy-600 rounded-2xl p-5 border border-[#DCE6E9] dark:border-navy-400 mb-6" x-show="clients.length>0">
+        <h2 class="font-semibold text-navy-500 dark:text-white mb-4">Clients par secteur</h2>
+        <div class="space-y-2.5">
+          <template x-for="s in secteurStats()" :key="s.label">
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-navy-300 dark:text-white/50 w-44 shrink-0 truncate" x-text="s.label"></span>
+              <div class="flex-1 bg-[#DCE6E9] dark:bg-navy-500 rounded-full h-2.5 overflow-hidden">
+                <div class="h-2.5 rounded-full" style="background:#3CD6D1" :style="'width:'+s.pct+'%;background:#3CD6D1'"></div>
+              </div>
+              <span class="text-xs font-bold text-navy-500 dark:text-white w-8 text-right" x-text="s.count"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+
       <!-- ── KPIs Contrats ── -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" x-show="contrats.length>0">
         <div class="bg-white dark:bg-[#012e40] rounded-2xl p-4 border border-[#DCE6E9] dark:border-navy-500">
@@ -463,10 +479,20 @@
           Nouveau client
         </button>
       </div>
-      <div class="relative mb-5">
-        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-        <input x-model="clientSearch" type="text" placeholder="Rechercher..."
-          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-600 border border-[#DCE6E9] dark:border-navy-400 rounded-xl text-sm focus:outline-none focus:border-teal-300" />
+      <div class="flex gap-3 mb-5">
+        <div class="relative flex-1">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+          <input x-model="clientSearch" type="text" placeholder="Rechercher..."
+            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-600 border border-[#DCE6E9] dark:border-navy-400 rounded-xl text-sm focus:outline-none focus:border-teal-300" />
+        </div>
+        <select x-model="clientSecteurFilter" class="input-field shrink-0">
+          <option value="">Tous secteurs</option>
+          <option value="Artisan">Artisan</option>
+          <option value="Restaurateur / Food">Restaurateur / Food</option>
+          <option value="Culture / Événementiel">Culture / Événementiel</option>
+          <option value="Tech / Startup">Tech / Startup</option>
+          <option value="Autre">Autre</option>
+        </select>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <template x-for="c in filteredClients()" :key="c.id">
@@ -482,6 +508,9 @@
                 </div>
                 <p class="text-xs text-navy-200 dark:text-white/40 truncate" x-text="c.entreprise||(c.typeClient==='b2c'?'Particulier':'Professionnel')"></p>
               </div>
+            </div>
+            <div x-show="c.secteur" class="mb-2">
+              <span class="badge text-xs" style="background:#edfcfc;color:#024059" x-text="c.secteur"></span>
             </div>
             <div class="space-y-1">
               <div x-show="c.email" class="text-xs text-navy-300 dark:text-white/50 truncate" x-text="c.email"></div>
@@ -1029,7 +1058,7 @@
 
       <!-- Filtres catégories -->
       <div class="flex gap-2 mb-5 flex-wrap">
-        <template x-for="cat in ['Tous','Réseaux sociaux','Corporate','Storytelling','Tournage','Montage','Options']" :key="cat">
+        <template x-for="cat in ['Tous','Réseaux sociaux','Film de marque','Storytelling','Tournage','Montage','Options']" :key="cat">
           <button @click="catalogueCatFilter=cat"
             class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
             :style="catalogueCatFilter===cat ? 'background:#3CD6D1;color:#024059' : 'background:#F0F5F7;color:#6b8fa3'">
@@ -1047,7 +1076,7 @@
         </div>
       </template>
 
-      <template x-for="cat in (catalogueCatFilter==='Tous' ? ['Réseaux sociaux','Corporate','Storytelling','Tournage','Montage','Options'] : [catalogueCatFilter])" :key="cat">
+      <template x-for="cat in (catalogueCatFilter==='Tous' ? ['Réseaux sociaux','Film de marque','Storytelling','Tournage','Montage','Options'] : [catalogueCatFilter])" :key="cat">
         <div x-show="catalogue.filter(p=>p.cat===cat).length>0" class="mb-6">
           <h2 class="text-xs font-bold uppercase tracking-widest mb-2 px-1" style="color:#3CD6D1" x-text="cat"></h2>
           <div class="bg-white dark:bg-navy-600 rounded-2xl border border-[#DCE6E9] dark:border-navy-400 overflow-hidden">
@@ -2808,7 +2837,7 @@
       <div>
         <label class="label-field">Catégorie</label>
         <select x-model="editingPrestation.cat" class="input-field w-full">
-          <template x-for="c in ['Réseaux sociaux','Corporate','Storytelling','Tournage','Montage','Options']" :key="c">
+          <template x-for="c in ['Réseaux sociaux','Film de marque','Storytelling','Tournage','Montage','Options']" :key="c">
             <option :value="c" x-text="c"></option>
           </template>
         </select>
@@ -2850,7 +2879,7 @@
     <div class="p-5 space-y-4 overflow-y-auto">
       <div>
         <label class="label-field">Nom du modèle</label>
-        <input x-model="editingTemplate.nom" placeholder="Ex: Pack Mariage, Pack Corporate..." class="input-field w-full">
+        <input x-model="editingTemplate.nom" placeholder="Ex: Pack Mariage, Pack Film de marque..." class="input-field w-full">
       </div>
       <div>
         <label class="label-field">Prestations incluses</label>
@@ -2884,7 +2913,7 @@
     <div class="px-6 pt-4 flex-shrink-0 space-y-3">
       <input x-model="cpSearch" type="text" placeholder="Rechercher…" class="input-field w-full text-sm">
       <div class="flex gap-2 flex-wrap">
-        <template x-for="cat in ['Tous','Réseaux sociaux','Corporate','Storytelling','Tournage','Montage','Options']" :key="cat">
+        <template x-for="cat in ['Tous','Réseaux sociaux','Film de marque','Storytelling','Tournage','Montage','Options']" :key="cat">
           <button @click="cpFilter=cat"
             class="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
             :style="cpFilter===cat ? 'background:#3CD6D1;color:#024059' : 'background:#F0F5F7;color:#6b8fa3'"
@@ -3056,6 +3085,28 @@
         <div class="grid grid-cols-2 gap-3">
           <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Email</label><input x-model="editingClient.email" type="email" class="input-field w-full" placeholder="contact@exemple.fr"></div>
           <div><label class="block text-xs font-semibold text-navy-200 mb-1.5">Téléphone</label><input x-model="editingClient.telephone" type="tel" class="input-field w-full" placeholder="06 00 00 00 00"></div>
+        </div>
+      </div>
+
+      <!-- Secteur & Recommandation -->
+      <div>
+        <p class="text-xs font-bold text-navy-500 dark:text-white uppercase tracking-wide mb-2">Secteur & origine</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-navy-200 mb-1.5">Secteur</label>
+            <select x-model="editingClient.secteur" class="input-field w-full">
+              <option value="">— Choisir —</option>
+              <option value="Artisan">Artisan</option>
+              <option value="Restaurateur / Food">Restaurateur / Food</option>
+              <option value="Culture / Événementiel">Culture / Événementiel</option>
+              <option value="Tech / Startup">Tech / Startup</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-navy-200 mb-1.5">Recommandé par</label>
+            <input x-model="editingClient.recommandePar" type="text" class="input-field w-full" placeholder="Nom du client ou source">
+          </div>
         </div>
       </div>
 
@@ -3292,6 +3343,26 @@
           <p class="text-xs text-navy-200 dark:text-white/30 mt-2 italic">✉️ = le client reçoit un email automatique quand vous cochez une étape.</p>
         </div>
 
+        <!-- Témoignage client -->
+        <div x-show="editingProjet.statut==='livraison' || editingProjet.statut==='facture'" class="border-t border-[#DCE6E9] dark:border-navy-500 pt-4 space-y-3">
+          <p class="text-xs font-bold text-navy-500 dark:text-white uppercase tracking-wide">💬 Témoignage client</p>
+          <div>
+            <label class="block text-xs font-semibold text-navy-200 mb-1.5">Verbatim</label>
+            <textarea x-model="editingProjet.temoignage" rows="3" placeholder="Coller ici les mots du client..." class="input-field w-full resize-none"></textarea>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-1">
+              <label class="text-xs font-semibold text-navy-200 mr-1">Note</label>
+              <template x-for="n in [1,2,3,4,5]" :key="n">
+                <button type="button" @click="editingProjet.temoignageNote = n"
+                  class="text-lg leading-none" :style="n <= (editingProjet.temoignageNote||0) ? 'color:#3CD6D1' : 'color:#DCE6E9'">★</button>
+              </template>
+            </div>
+            <button type="button" @click="navigator.clipboard.writeText(editingProjet.temoignage||'')"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-80" style="background:#edfcfc;color:#024059">📋 Copier</button>
+          </div>
+        </div>
+
         <!-- Lien Notion + Notes internes -->
         <div class="border-t border-[#DCE6E9] dark:border-navy-500 pt-4 space-y-3">
           <div>
@@ -3336,7 +3407,7 @@
     </div>
     <!-- Filtres catégories -->
     <div class="px-6 pt-3 pb-2 flex gap-2 flex-wrap flex-shrink-0">
-      <template x-for="cat in ['Tous','Réseaux sociaux','Corporate','Storytelling','Tournage','Montage','Options']" :key="cat">
+      <template x-for="cat in ['Tous','Réseaux sociaux','Film de marque','Storytelling','Tournage','Montage','Options']" :key="cat">
         <button @click="catFilter=cat"
           class="px-3 py-1 rounded-full text-xs font-semibold transition-all"
           :style="catFilter===cat ? 'background:#3CD6D1;color:#024059' : 'background:#F0F5F7;color:#6b8fa3'"
@@ -4628,7 +4699,7 @@
             <p class="text-xs text-navy-200">Décris le projet en quelques mots — Claude suggère les lignes depuis le catalogue.</p>
             <textarea x-model="devisAide.description" rows="3"
               class="input-field w-full resize-none text-sm"
-              placeholder="Ex : Vidéo corporate 2 min pour une startup tech, tournage 1 jour, montage inclus, livraison YouTube"
+              placeholder="Ex : Vidéo Film de marque 2 min pour une startup tech, tournage 1 jour, montage inclus, livraison YouTube"
               :disabled="devisAide.loading"></textarea>
             <!-- Suggestion reçue -->
             <div x-show="devisAide.suggestion" class="space-y-2">
@@ -5088,6 +5159,7 @@ function crm() {
     mobileMenu: false,
     darkMode: false,
     clientSearch: '',
+    clientSecteurFilter: '',
     projetFilterClient: '',
     clients: [], projets: [], devisListe: [], factures: [], transactions: [], urssafDeclarations: {}, catalogue: [], templatesDevis: [],
     settings: {
@@ -5602,11 +5674,11 @@ function crm() {
         { id:uid(), nom:'1 Reel complet', cat:'Réseaux sociaux', prixMin:260, prixMax:260, unite:'forfait', description:'Prise en charge totale : phase de tournage agile sur site + montage Premium inclus' },
         { id:uid(), nom:'Pack 3 Reels', cat:'Réseaux sociaux', prixMin:490, prixMax:490, unite:'forfait', description:'Session groupée de tournage et post-production de 3 formats courts. Idéal pour un lancement' },
         { id:uid(), nom:'Pack 5 Reels', cat:'Réseaux sociaux', prixMin:750, prixMax:750, unite:'forfait', description:'Optimisation maximale de votre présence de marque. Tournage global et déclinaisons de 5 vidéos' },
-        // Corporate & Showcase
-        { id:uid(), nom:'Présentation Artisan (1 min)', cat:'Corporate', prixMin:490, prixMax:490, unite:'forfait', description:'Format court axé storytelling, mettant en valeur le geste technique et l\'identité de l\'artisan' },
-        { id:uid(), nom:'Présentation 2-3 min', cat:'Corporate', prixMin:690, prixMax:690, unite:'forfait', description:'Vidéo vitrine institutionnelle ou commerciale pour site web, portfolio et présentations clients' },
-        { id:uid(), nom:'Interview simple', cat:'Corporate', prixMin:350, prixMax:350, unite:'forfait', description:'Installation fixe multi-micro DJI Mic, éclairage professionnel, face caméra épuré' },
-        { id:uid(), nom:'Interview + Plans de coupe', cat:'Corporate', prixMin:550, prixMax:550, unite:'forfait', description:'Interview dynamique enrichie d\'images d\'illustration (B-roll) pour dynamiser le propos' },
+        // Film de marque & Showcase
+        { id:uid(), nom:'Présentation Artisan (1 min)', cat:'Film de marque', prixMin:490, prixMax:490, unite:'forfait', description:'Format court axé storytelling, mettant en valeur le geste technique et l\'identité de l\'artisan' },
+        { id:uid(), nom:'Présentation 2-3 min', cat:'Film de marque', prixMin:690, prixMax:690, unite:'forfait', description:'Vidéo vitrine institutionnelle ou commerciale pour site web, portfolio et présentations clients' },
+        { id:uid(), nom:'Interview simple', cat:'Film de marque', prixMin:350, prixMax:350, unite:'forfait', description:'Installation fixe multi-micro DJI Mic, éclairage professionnel, face caméra épuré' },
+        { id:uid(), nom:'Interview + Plans de coupe', cat:'Film de marque', prixMin:550, prixMax:550, unite:'forfait', description:'Interview dynamique enrichie d\'images d\'illustration (B-roll) pour dynamiser le propos' },
         // Podcast & YouTube
         { id:uid(), nom:'Montage Podcast — 30 min', cat:'Montage', prixMin:120, prixMax:120, unite:'forfait', description:'Nettoyage audio, mixage des voix, synchronisation multi-caméras et habillage basique' },
         { id:uid(), nom:'Montage Podcast — 60 min', cat:'Montage', prixMin:220, prixMax:220, unite:'forfait', description:'Traitement intégral du flux long format, chapitrage et optimisation du rendu sonore global' },
@@ -5628,10 +5700,10 @@ function crm() {
         { id:uid(), nom:'🚗 Frais de déplacement', cat:'Frais & Débours', prixMin:0.518, prixMax:0.518, unite:'km', description:'Indemnités kilométriques au barème URSSAF (au-delà de 50 km du lieu d\'activité). Kia Picanto 4CV — 0,518 €/km jusqu\'à 5 000 km/an. Applicable uniquement au-delà de 50 km de Montpellier (aller-retour comptabilisé).' },
         { id:uid(), nom:'🏨 Frais d\'hébergement', cat:'Frais & Débours', prixMin:90, prixMax:90, unite:'nuit', description:'Hébergement sur justificatif lors des déplacements professionnels (plafond URSSAF : 90€/nuit hôtel, repas 20,20€). Facturation au réel sur présentation de justificatif.' },
         // Prestations types — visibles dès le premier chargement pour montrer un catalogue complet
-        { id:uid(), nom:'Vidéo corporate 2min', cat:'Corporate', prixMin:900, prixMax:900, unite:'forfait', description:'Vidéo institutionnelle de 2 minutes, du brief au montage final, prête à diffuser sur site web et réseaux pro.' },
+        { id:uid(), nom:'Vidéo Film de marque 2min', cat:'Film de marque', prixMin:900, prixMax:900, unite:'forfait', description:'Vidéo institutionnelle de 2 minutes, du brief au montage final, prête à diffuser sur site web et réseaux pro.' },
         { id:uid(), nom:'Reel / Short 30s', cat:'Réseaux sociaux', prixMin:350, prixMax:350, unite:'forfait', description:'Format court vertical de 30 secondes, tournage et montage inclus, optimisé pour Instagram et TikTok.' },
         { id:uid(), nom:'Aftermovie événementiel', cat:'Storytelling', prixMin:1200, prixMax:1200, unite:'forfait', description:'Captation et montage immersif d\'un événement (festival, soirée, conférence), restitution de l\'ambiance et des moments forts.' },
-        { id:uid(), nom:'Interview filmée', cat:'Corporate', prixMin:600, prixMax:600, unite:'forfait', description:'Interview professionnelle, installation multi-caméra, éclairage et son soignés, montage avec plans de coupe.' },
+        { id:uid(), nom:'Interview filmée', cat:'Film de marque', prixMin:600, prixMax:600, unite:'forfait', description:'Interview professionnelle, installation multi-caméra, éclairage et son soignés, montage avec plans de coupe.' },
         { id:uid(), nom:'Pack TikTok x5 vidéos', cat:'Réseaux sociaux', prixMin:800, prixMax:800, unite:'forfait', description:'Production de 5 vidéos courtes verticales clés en main pour TikTok/Instagram, tournage groupé et montage inclus.' },
         { id:uid(), nom:'Montage seul (rushes fournis)', cat:'Montage', prixMin:250, prixMax:250, unite:'forfait', description:'Montage à partir de rushes déjà tournés et fournis par le client, étalonnage et habillage de base inclus.' },
       ];
@@ -7617,15 +7689,27 @@ ${htmlContent}
     // ── CLIENTS ──
     filteredClients() {
       const q = (this.clientSearch||'').toLowerCase();
-      if(!q) return this.clients;
-      return this.clients.filter(c=>
+      const sect = this.clientSecteurFilter||'';
+      let list = this.clients;
+      if(sect) list = list.filter(c=>(c.secteur||'')===sect);
+      if(!q) return list;
+      return list.filter(c=>
         (c.nom||'').toLowerCase().includes(q)||
         (c.entreprise||'').toLowerCase().includes(q)||
         (c.email||'').toLowerCase().includes(q)
       );
     },
-    openNewClient() { this.editingClient={id:null,nom:'',entreprise:'',email:'',telephone:'',adresse:'',codePostal:'',ville:'',siret:'',notes:'',typeClient:'b2b',contacts:[]}; this.clientModalTab='infos'; this.siretLookup={loading:false,error:'',found:false}; this.modals.client=true; },
-    editClient(c) { this.editingClient={...c, contacts: c.contacts ? JSON.parse(JSON.stringify(c.contacts)) : []}; this.clientModalTab='infos'; this.siretLookup={loading:false,error:'',found:false}; this.modals.client=true; },
+    secteurStats() {
+      const secteurs = ['Artisan','Restaurateur / Food','Culture / Événementiel','Tech / Startup','Autre'];
+      const counts = secteurs.map(label => ({
+        label,
+        count: this.clients.filter(c => (c.secteur||'Autre')===label || (label==='Autre' && !c.secteur)).length
+      }));
+      const total = this.clients.length || 1;
+      return counts.filter(s=>s.count>0).map(s => ({...s, pct: Math.round(s.count/total*100)})).sort((a,b)=>b.count-a.count);
+    },
+    openNewClient() { this.editingClient={id:null,nom:'',entreprise:'',email:'',telephone:'',adresse:'',codePostal:'',ville:'',siret:'',notes:'',typeClient:'b2b',secteur:'',recommandePar:'',contacts:[]}; this.clientModalTab='infos'; this.siretLookup={loading:false,error:'',found:false}; this.modals.client=true; },
+    editClient(c) { this.editingClient={secteur:'',recommandePar:'',...c, contacts: c.contacts ? JSON.parse(JSON.stringify(c.contacts)) : []}; this.clientModalTab='infos'; this.siretLookup={loading:false,error:'',found:false}; this.modals.client=true; },
     saveClient() {
       if(!this.editingClient.nom.trim()) return alert('Nom requis');
       let saved;
@@ -8527,8 +8611,8 @@ ${tvaXML}
             max_tokens: 4000,
             system: `Tu es assistant de production vidéo pour Moustikprod.
 À partir du texte fourni, extrais et retourne UNIQUEMENT ce JSON valide :
-{"titre":"titre court du projet","typePrestation":"Réseaux sociaux|Corporate|Événementiel|Court-métrage|Documentaire|Autre","plateforme":"plateformes de diffusion","publicCible":"description du public","messageCle":"message principal","tonAmbiance":["Dynamique"],"references":"références ou inspirations","brief":"description complète du projet","pitch":"résumé 2-3 phrases","intro":"introduction scénario","deroulé":"développement principal","fin":"conclusion","lieux":"lieux de tournage","matos":["item1"],"idees":"idées créatives","aPenser":"points importants"}
-Pour tonAmbiance, utilise uniquement : Dynamique, Émouvant, Corporate, Fun, Cinématique, Minimaliste, Inspirant, Documentaire.
+{"titre":"titre court du projet","typePrestation":"Réseaux sociaux|Film de marque|Événementiel|Court-métrage|Documentaire|Autre","plateforme":"plateformes de diffusion","publicCible":"description du public","messageCle":"message principal","tonAmbiance":["Dynamique"],"references":"références ou inspirations","brief":"description complète du projet","pitch":"résumé 2-3 phrases","intro":"introduction scénario","deroulé":"développement principal","fin":"conclusion","lieux":"lieux de tournage","matos":["item1"],"idees":"idées créatives","aPenser":"points importants"}
+Pour tonAmbiance, utilise uniquement : Dynamique, Émouvant, Film de marque, Fun, Cinématique, Minimaliste, Inspirant, Documentaire.
 Sois concis dans chaque champ (max 300 caractères). Réponds UNIQUEMENT avec le JSON.`,
             messages: [{ role:'user', content: texteMax }],
           }),
